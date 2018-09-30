@@ -1,0 +1,21 @@
+.sidebar {
+    .main-link {
+        &.active {
+            color: rgba(0,0,0,.95);
+            cursor: default;
+        }
+    }
+    .menu {
+        .item {
+            a {
+                cursor: pointer;
+                i {
+                    vertical-align: middle;
+                }
+                span {
+                    vertical-align: middle;
+                }
+            }
+        }
+    }
+}
