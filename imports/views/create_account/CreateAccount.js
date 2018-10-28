@@ -2,9 +2,10 @@ import React, { Component } from 'react';
 import { Form, Container, Grid, Header, Icon } from 'semantic-ui-react';
 import {Accounts} from "meteor/accounts-base";
 import { Link } from 'react-router-dom';
-import { withTracker } from 'meteor/react-meteor-data';
-import { withRouter } from 'react-router-dom';
-import {Meteor} from "meteor/meteor";
+import {resetFieldsError, updateForm} from '../../lib/helpers';
+import HomeRedirector from '../../higher_order/HomeRedirector';
+import { validateEmail, validatePassword } from "../../lib/string";
+import toastr from "toastr";
 
 class CreateAccount extends Component {
     constructor(props){
@@ -14,40 +15,28 @@ class CreateAccount extends Component {
             first_name: '',
             last_name: '',
             password: '',
-            nick_name: ''
+            error: false,
+            load: false
         };
     }
-    componentWillMount(){
-        if (this.props.user_id) {
-            this.props.history.push('/');
-        }
-    }
-
-    componentDidUpdate(prevProps, prevState){
-        if (this.props.user_id) {
-            this.props.history.push('/');
-        }
-    }
-    updateForm = (e) => {
-        let new_state = {};
-        new_state[e.target.name] = e.target.value;
-        this.setState(new_state);
-    }
     createAccount = () => {
-        if(this.state.email && this.state.password && this.state.first_name && this.state.last_name && this.state.nick_name){
+        if(!validateEmail(this.state.email) || !validatePassword(this.state.password) || !this.state.first_name || !this.state.last_name){
+            this.setState({error: true});
+            return;
+        }
+        if(!this.state.load){
+            this.setState({load: true});
             Accounts.createUser({
+                email: this.state.email,
                 username: this.state.email,
                 password: this.state.password,
-                profile: {first_name: this.state.first_name, last_name: this.state.last_name, nick_name: this.state.nick_name}
+                profile: {first_name: this.state.first_name, last_name: this.state.last_name}
             }, (err, res) => {
-                if(!err){
-                    alert('created');
-                } else {
-                    alert(err.reason || err.message);
+                this.setState({load: false});
+                if(err){
+                    toastr["error"](err.reason || err.message, "Error!");
                 }
             });
-        } else {
-            alert('All fields required.')
         }
     }
     render(){
@@ -63,66 +52,64 @@ class CreateAccount extends Component {
                             Sign Up for Krakow city chat
                         </Header>
                         <Form onSubmit={ this.createAccount }>
-                            <Form.Input
-                                onChange={this.updateForm}
-                                value={this.state.email}
-                                name="email"
-                                type="text"
-                                fluid
-                                label='Email'
-                                placeholder='Email'
-                                widths={16}
-                            />
-                            <Form.Input
-                                onChange={this.updateForm}
-                                value={this.state.nick_name}
-                                name="nick_name"
-                                type="text"
-                                fluid
-                                label='Nick name'
-                                placeholder='Nick name'
-                                widths={16}
-                            />
-                            <Form.Input
-                                onChange={this.updateForm}
-                                value={this.state.first_name}
-                                name="first_name"
-                                type="text"
-                                fluid
-                                label='First name'
-                                placeholder='First name'
-                            />
-                            <Form.Input
-                                onChange={this.updateForm}
-                                value={this.state.last_name}
-                                name="last_name"
-                                type="text"
-                                fluid
-                                label='Last name'
-                                placeholder='Last name'
-                            />
-                            <Form.Input
-                                onChange={this.updateForm}
-                                value={this.state.password}
-                                name="password"
-                                type="password"
-                                fluid
-                                label='Password'
-                                placeholder='Password'
-                            />
-                            <Form.Button primary>Submit</Form.Button>
+                            <Form.Field error={this.state.error && !validateEmail(this.state.email)}>
+                                <label>Email</label>
+                                <input
+                                    onFocus={resetFieldsError.bind(this)}
+                                    onChange={updateForm.bind(this)}
+                                    value={this.state.email}
+                                    name="email"
+                                    type="text"
+                                    placeholder='Email'
+                                />
+                            </Form.Field>
+                            <Form.Field error={this.state.error && !this.state.first_name}>
+                                <label>First name</label>
+                                <input
+                                    onFocus={resetFieldsError.bind(this)}
+                                    onChange={updateForm.bind(this)}
+                                    value={this.state.first_name}
+                                    name="first_name"
+                                    type="text"
+                                    placeholder='First name'
+                                />
+                            </Form.Field>
+                            <Form.Field error={this.state.error && !this.state.last_name}>
+                                <label>Last name</label>
+                                <input
+                                    onFocus={resetFieldsError.bind(this)}
+                                    onChange={updateForm.bind(this)}
+                                    value={this.state.last_name}
+                                    name="last_name"
+                                    type="text"
+                                    placeholder='Last name'
+                                />
+                            </Form.Field>
+                            <Form.Field error={this.state.error && !validatePassword(this.state.password)}>
+                                <label>
+                                    Password <br/>
+                                    <span className="explain-text">
+                                        Minimum eight characters, at least one letter and one number
+                                    </span>
+                                </label>
+                                <input
+                                    onFocus={resetFieldsError.bind(this)}
+                                    onChange={updateForm.bind(this)}
+                                    value={this.state.password}
+                                    name="password"
+                                    type="password"
+                                    placeholder='Password'
+                                />
+                            </Form.Field>
+                            <Form.Button primary>Create</Form.Button>
                         </Form>
                         <br/>
-                        <Link to="/login">Already have an account</Link>
+                        <Link to="/login">Already have an account</Link><br/>
+                        <Link to="/forgot-password">Forgot your password?</Link>
                     </Grid.Column>
                 </Grid>
             </Container>
         )
     }
 }
-export default withRouter(withTracker(() => {
-    return {
-        user_id: Meteor.userId(),
-        loginning: Meteor.loggingIn()
-    }
-})(CreateAccount));
+export default HomeRedirector(CreateAccount);

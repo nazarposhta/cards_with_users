@@ -1,0 +1,6 @@
+{
+  "public": {
+    "test_var": "Hello world!"
+  },
+  "server_var": "Hello from server"
+}

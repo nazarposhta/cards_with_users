@@ -15,7 +15,6 @@ class Profile extends Component {
         this.state = {
             first_name: '',
             last_name: '',
-            nick_name: '',
             birthday: '',
             gender: '',
             country: '',
@@ -30,7 +29,6 @@ class Profile extends Component {
             this.setState({
                 first_name: profile.first_name || '',
                 last_name: profile.last_name || '',
-                nick_name: profile.nick_name || '',
                 birthday: profile.birthday || '',
                 gender: profile.gender || '',
                 country: profile.country || '',
@@ -83,7 +81,10 @@ class Profile extends Component {
                             </Grid.Column>
                             <Grid.Column mobile={16} tablet={10} computer={10}>
                                 <Form onSubmit={this.saveParameters}>
-                                    <Form.Field error={this.state.first_name || !this.props.handle ? false : true} className="spinner-wrapp">
+                                    <Form.Field
+                                        error={this.state.first_name || !this.props.handle ? false : true}
+                                        className="spinner-wrapp"
+                                    >
                                         <label>First Name</label>
                                         <input
                                             onChange={(e) => {this.updateValue(e.target.value, 'first_name')}}
@@ -105,14 +106,6 @@ class Profile extends Component {
                                             onChange={(e) => {this.updateValue(e.target.value, 'last_name')}}
                                             value={this.state.last_name}
                                             placeholder='Last Name'
-                                        />
-                                    </Form.Field>
-                                    <Form.Field>
-                                        <label>Nick Name</label>
-                                        <input
-                                            value={this.state.nick_name}
-                                            disabled
-                                            placeholder='Nick Name'
                                         />
                                     </Form.Field>
                                     <Form.Field>

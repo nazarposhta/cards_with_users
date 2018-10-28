@@ -1,40 +1,36 @@
 import React, { Component } from 'react';
 import { Link } from 'react-router-dom';
-import {Form, Container, Header, Icon, Grid} from 'semantic-ui-react';
-import {Meteor} from "meteor/meteor";
-import { withTracker } from 'meteor/react-meteor-data';
-import { withRouter } from 'react-router-dom';
+import {Form, Container, Header, Icon, Grid, Button} from 'semantic-ui-react';
+import { updateForm, resetFieldsError } from '../../lib/helpers';
+import HomeRedirector from '../../higher_order/HomeRedirector';
+import { validateEmail, validatePassword } from "../../lib/string";
+import Spinner from "../common/spinner/Spinner";
+import toastr from "toastr";
 
 class Login extends Component {
     constructor(props){
         super();
         this.state = {
             email: '',
-            password: ''
+            password: '',
+            error: false
         };
     }
-    componentWillMount(){
-        if (this.props.user_id) {
-            this.props.history.push('/');
-        }
-    }
-
-    componentDidUpdate(prevProps, prevState){
-        if (this.props.user_id) {
-            this.props.history.push('/');
-        }
-    }
     logIn = () => {
-        Meteor.loginWithPassword(this.state.email, this.state.password, (err, res) => {
-            if(err){
-                alert(err.reason || err.message);
-            }
-        });
-    }
-    updateForm = (e) => {
-        let new_state = {};
-        new_state[e.target.name] = e.target.value;
-        this.setState(new_state);
+        if(!validateEmail(this.state.email) || !validatePassword(this.state.password)){
+            this.setState({ error: true });
+            return;
+        }
+        if(!this.state.load){
+            this.setState({ load: true });
+            Meteor.loginWithPassword({username: this.state.email}, this.state.password, (err, res) => {
+                this.setState({ load: false });
+                if(err){
+                    toastr["error"](err.reason || err.message, "Error!");
+                }
+            });
+        }
+
     }
     render(){
         return(
@@ -49,37 +45,52 @@ class Login extends Component {
                                 Login to Krakow city chat
                             </Header>
                             <Form onSubmit={ this.logIn }>
-                                <Form.Input
-                                    onChange={this.updateForm}
-                                    value={this.state.email}
-                                    name="email"
-                                    type="text"
-                                    fluid
-                                    label='Email'
-                                    placeholder='Email'
-                                />
-                                <Form.Input
-                                    onChange={this.updateForm}
-                                    value={this.state.password}
-                                    name="password"
-                                    type="password"
-                                    fluid
-                                    label='Password'
-                                    placeholder='Password'
-                                />
-                                <Form.Button primary>Submit</Form.Button>
+                                <Form.Field error={this.state.error && !validateEmail(this.state.email)}>
+                                    <label>Email</label>
+                                    <input
+                                        onFocus={resetFieldsError.bind(this)}
+                                        onChange={updateForm.bind(this)}
+                                        value={this.state.email}
+                                        name="email"
+                                        type="text"
+                                        placeholder='Email'
+                                    />
+                                </Form.Field>
+                                <Form.Field error={this.state.error && !validatePassword(this.state.password)}>
+                                    <label>
+                                        Password <br/>
+                                        <span className="explain-text">
+                                            Minimum eight characters, at least one letter and one number
+                                        </span>
+                                    </label>
+                                    <input
+                                        onFocus={resetFieldsError.bind(this)}
+                                        onChange={updateForm.bind(this)}
+                                        value={this.state.password}
+                                        name="password"
+                                        type="password"
+                                        placeholder='Password'
+                                    />
+                                </Form.Field>
+                                <Button primary className="spinner-wrapp">
+                                    Login
+                                    {
+                                        this.state.load ?
+                                            <Spinner
+                                                size="small"
+                                            />
+                                            :
+                                            null
+                                    }
+                                </Button>
                             </Form>
                             <br/>
-                            <Link to="/create-account">Create account</Link>
+                            <Link to="/create-account">Create account</Link><br/>
+                            <Link to="/forgot-password">Forgot your password?</Link>
                         </Grid.Column>
                     </Grid>
             </Container>
         )
     }
 }
-export default withRouter(withTracker(() => {
-    return {
-        user_id: Meteor.userId(),
-        loginning: Meteor.loggingIn()
-    }
-})(Login));
+export default HomeRedirector(Login);
